@@ -1,10 +1,33 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { openJob, resolveShared } from "./dual.ts";
+import { openJob, resolveShared, educationalPayout } from "./dual.ts";
 
 const orng = "orng.wax";
-const entropyEven = "00000000aaaaaaaa"; // payout 19600 in educational mapping
-const entropyOdd = "00000001bbbbbbbb"; // payout 0
+const entropyEven = "00000000aaaaaaaa";
+const entropyOdd = "00000001bbbbbbbb";
+
+describe("openJob", () => {
+  it("refuses non-positive id", () => {
+    assert.throws(() => openJob([], 0n, "alice"), /bad job id/);
+  });
+
+  it("refuses duplicate id", () => {
+    const jobs = openJob([], 1n, "alice");
+    assert.throws(() => openJob(jobs, 1n, "bob"), /already open/);
+  });
+});
+
+describe("educationalPayout", () => {
+  it("even leading word pays 19600; odd pays 0", () => {
+    assert.equal(educationalPayout(entropyEven), 19600n);
+    assert.equal(educationalPayout(entropyOdd), 0n);
+  });
+
+  it("refuses short or non-hex entropy", () => {
+    assert.throws(() => educationalPayout("abc"), /entropy/);
+    assert.throws(() => educationalPayout("zzzzzzzz"), /entropy/);
+  });
+});
 
 describe("resolveShared", () => {
   it("randnotify resolves once with payout", () => {
@@ -71,7 +94,21 @@ describe("resolveShared", () => {
           orng,
           entropy: entropyEven,
         }),
-      /orng/
+      /orng/,
+    );
+  });
+
+  it("refuses unknown job", () => {
+    assert.throws(
+      () =>
+        resolveShared([], {
+          path: "randnotify",
+          jobId: 1n,
+          caller: orng,
+          orng,
+          entropy: entropyEven,
+        }),
+      /unknown job/,
     );
   });
 });
