@@ -3,7 +3,9 @@
 > **Rung:** `npm test` passes. No call to `orng.wax`. The payout function is a teaching stand-in, not a fair coin.  
 > **The test is the rule.**
 
-Read `px-orng-v3-randnotify-starter` first if you have not. That lab throws on a second resolve and does not pay. This lab returns `already_resolved` and keeps the first payout.
+Read [px-orng-v3-randnotify-starter](https://github.com/pixel-journey/px-orng-v3-randnotify-starter) first if you have not. That lab throws on a second resolve and does not pay. This lab returns `already_resolved` and keeps the first payout.
+
+Official service: [worldwide-asset-exchange/wax-orng](https://github.com/worldwide-asset-exchange/wax-orng). Sample on docs.wax.io: [RNG smart contract tutorial](https://docs.wax.io/build/tutorials/create-wax-rng-smart-contract/rng_sample).
 
 ## What you should be able to do
 
@@ -11,7 +13,19 @@ Read `px-orng-v3-randnotify-starter` first if you have not. That lab throws on a
 | --- | --- |
 | Beginner | Show that `randnotify` then `receiverand` does not pay twice |
 | Intermediate | Explain why the second entropy is ignored, and what `19600n` actually is |
-| Masterclass | Specify one on-chain function both notification handlers must call |
+| Masterclass | Specify one on-chain function both notification handlers must call; isolate multi-job state |
+
+---
+
+## Official sketch (read the source of truth)
+
+On production WAX, dapps typically:
+
+1. Call `orng.wax::requestrand` with a unique `assoc_id`, a `signing_value` (often derived from the tx), and `caller` = your contract.
+2. Handle the delivery notification (`randnotify` on modern contracts; legacy `receiverand` still appears in older code and samples).
+3. Match the delivery to the pending job by `assoc_id` / request id and pay **once**.
+
+This repository only models step 3’s **idempotency** with two path names. It does not broadcast `requestrand`, stake RNG credits, or verify oracle signatures. See [SOURCES.md](SOURCES.md).
 
 ---
 
@@ -53,20 +67,23 @@ npm test
 
 If `job.resolved` is already true, it returns the same job list and the **current** path name. It does not read entropy. That is why the odd hex cannot overwrite 19600. If you "fixed" the second call by running `educationalPayout` again, you would change the payout after the fact. The test exists to forbid that.
 
-If the job is open, payout is computed once, `resolved` becomes true, and `resolvedBy` stores which name won the race.
+### Multi-job composition (new tests)
 
-`educationalPayout` takes the first 8 hex characters. `00000000` is 0, which is even, so 19600. `00000001` is 1, which is odd, so 0. The rest of the hex is ignored. The pattern is 8..64 hex characters. This is not rejection sampling and not a 50/50 coin over the full entropy. `px-orng-coinflip-escrow` is the neighbor that talks about bias. Do not cite this mapper as that design.
+`invariants/dual.composition.test.ts` covers:
 
-Unknown job throws `unknown job`. The tests do not call it. Bad entropy throws `bad entropy hex`. The tests do not call it.
+- Two open jobs resolve on **different** paths without sharing payout or `resolvedBy`.
+- Resolving job 10 leaves job 20 open.
+- `receiverand` first, then `randnotify`: first path and payout stick.
+- Identical entropy delivered twice: still one pay.
 
 ### Attack → test
 
-| Attack | Naive code | This lab | Test |
-| --- | --- | --- | --- |
-| Both callback names pay | 19600 then another payout | second status `already_resolved` | `second path is already_resolved and keeps first payout` |
-| Second entropy replaces the first | Payout flips from 19600 to 0 | first payout kept | same test asserts `19600n` |
-| Only `randnotify` is implemented | Legacy `receiverand` never pays, or pays on its own flag | `receiverand` can be first | `receiverand can be the first resolver` |
-| User calls resolve | User sets payout | `caller must be orng` | `refuses non-orng caller` |
+| Attack | Naive code | This lab |
+| --- | --- | --- |
+| Both callback names pay | double payout | `already_resolved` |
+| Second entropy replaces the first | payout flips | first payout kept |
+| Cross-job bleed | job A resolve marks job B | composition tests |
+| User calls resolve | user sets payout | `caller must be orng` |
 
 ### Difference from the starter
 
@@ -74,28 +91,26 @@ Unknown job throws `unknown job`. The tests do not call it. Bad entropy throws `
 | --- | --- | --- |
 | Second resolve | Throws `job already resolved` | Returns `already_resolved` |
 | Payout | None | Toy even/odd mapper |
-| Paths | One `resolveJob` | `randnotify` and `receiverand` share `resolveShared` |
-
-Both are once-only. They are not the same API. Do not merge the error strings in your notes.
+| Paths | One `resolveJob` | shared `resolveShared` |
 
 ---
 
 ## Masterclass — two handlers, one writer
 
-On chain you will be tempted to copy the body into `on_notify` of `randnotify` and again into `receiverand`. The second copy will drift. The vault rule is: `receiverand` calls `require_auth(orng.wax)`, and both paths call one internal function that reads and writes one row.
+On chain you will be tempted to copy the body into `on_notify` of `randnotify` and again into `receiverand`. The second copy will drift. The vault rule is: require the oracle account, and both paths call one internal function that reads and writes one row.
 
 That internal function must:
 
-- Ignore the call when the job is already resolved, **without** sending tokens again. Returning a status is fine. Emitting a second inline `transfer` is not.
-- Set the payout and the flag in the same action as the transfer. A flag set in a later action races the second callback.
-- Treat `caller` in the action data as untrusted. `require_auth(orng.wax)` is the check. This file compares two strings the test passed in.
+- Ignore the call when the job is already resolved, **without** sending tokens again.
+- Set the payout and the flag in the same action as the transfer.
+- Treat action-data "caller" as untrusted; `require_auth(orng.wax)` is the real check. This file only compares strings.
 
-The toy payout must not ship. Even/odd on four bytes is predictable, ignores the rest of the entropy, and uses 19600 only so the test has a recognizable number (the coinflip lab's executed "10000 in → 19600 out" is a different rule). Replace it with the sampled result you committed to before the oracle replied.
+The toy payout must not ship. Replace it with the sampled result you committed to before the oracle replied. For house-edge sampling see [px-orng-coinflip-escrow](https://github.com/pixel-journey/px-orng-coinflip-escrow).
 
 ### Exercise
 
-1. First path `receiverand` with `00000000aaaaaaaa`, second path `randnotify` with the same hex. What is `resolvedBy`? (`receiverand`. Derived. The test covers receiverand-first only with the odd hex.)
-2. Why is recomputing payout on `already_resolved` a bug even if the second entropy matches the first? (You should not have a second writer. A future edit might apply a fee or a different formula.)
+1. First path `receiverand` with even entropy, second `randnotify` with odd. What is `resolvedBy`? (`receiverand` — covered by composition tests.)
+2. Why is recomputing payout on `already_resolved` a bug even if entropy matches?
 3. Does this repo broadcast either action? (No.)
 
 ---
