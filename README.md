@@ -1,15 +1,14 @@
 # One resolver for randnotify and receiverand
 
-> **Trust:** private educational lab (Tier B)  
 > **Domain:** WAX ORNG — dual callback idempotency  
 > **Sources:** [SOURCES.md](SOURCES.md)  
-> **Vault:** [px-contract-examples-vault](https://github.com/pixel-journey/px-contract-examples-vault)
+> **Catalog:** [px-contract-examples-vault](https://github.com/pixel-journey/px-contract-examples-vault)
 
-**One-sentence goal:** Teach **one shared resolver** for `randnotify` and legacy `receiverand` so a **second callback does not change payout**.
+**Goal:** Teach **one shared resolver** for `randnotify` and legacy `receiverand` so a **second callback does not change payout**.
 
-**Real code:** `npm test` (unit + **multi-job composition**). **Does not** call `orng.wax`. The entropy string is a stand-in, not chain RNG.
+**Code under test:** `npm test` (unit + multi-job composition). Does not call `orng.wax`. The entropy string is a stand-in for teaching resolve order, not chain RNG.
 
-Official service: [wax-orng](https://github.com/worldwide-asset-exchange/wax-orng). Sample: [RNG tutorial](https://docs.wax.io/build/tutorials/create-wax-rng-smart-contract/rng_sample). Starter job table: [px-orng-v3-randnotify-starter](https://github.com/pixel-journey/px-orng-v3-randnotify-starter).
+**Official service:** [wax-orng](https://github.com/worldwide-asset-exchange/wax-orng). **Sample:** [RNG tutorial](https://docs.wax.io/build/tutorials/create-wax-rng-smart-contract/rng_sample). **Starter job table:** [px-orng-v3-randnotify-starter](https://github.com/pixel-journey/px-orng-v3-randnotify-starter).
 
 ## What is true (executed)
 
@@ -33,8 +32,6 @@ open job → requestrand [not here] → randnotify or receiverand → resolveSha
 - [px-orng-v3-randnotify-starter](https://github.com/pixel-journey/px-orng-v3-randnotify-starter)
 - [px-orng-coinflip-escrow](https://github.com/pixel-journey/px-orng-coinflip-escrow)
 - [px-orng-legacy-receiverand-adapter](https://github.com/pixel-journey/px-orng-legacy-receiverand-adapter)
-
-## Run
 
 ```bash
 npm test
