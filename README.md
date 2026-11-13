@@ -2,13 +2,24 @@
 
 > **Domain:** WAX ORNG — dual callback idempotency  
 > **Sources:** [SOURCES.md](SOURCES.md)  
-> **Catalog:** [px-contract-examples-vault](https://github.com/pixel-journey/px-contract-examples-vault)
+> **Catalog:** [px-contract-examples-vault](https://github.com/pixel-journey/px-contract-examples-vault)  
+> **Path:** [ORNG-LEARNING-PATH.md](https://github.com/pixel-journey/px-contract-examples-vault/blob/main/docs/ORNG-LEARNING-PATH.md)
 
 **Goal:** Teach **one shared resolver** for `randnotify` and legacy `receiverand` so a **second callback does not change payout**.
 
-**Code under test:** `npm test` (unit + multi-job composition). Does not call `orng.wax`. The entropy string is a stand-in for teaching resolve order, not chain RNG.
+**Code under test:** `npm test` (unit + multi-job composition). Does not call `orng.wax`. Entropy is a stand-in for resolve order, not chain RNG.
 
-**Official service:** [wax-orng](https://github.com/worldwide-asset-exchange/wax-orng). **Sample:** [RNG tutorial](https://docs.wax.io/build/tutorials/create-wax-rng-smart-contract/rng_sample). **Starter job table:** [px-orng-v3-randnotify-starter](https://github.com/pixel-journey/px-orng-v3-randnotify-starter).
+**Official:** [wax-orng](https://github.com/worldwide-asset-exchange/wax-orng). **Sample:** [RNG tutorial](https://docs.wax.io/build/tutorials/create-wax-rng-smart-contract/rng_sample).
+
+## Learning materials
+
+| Doc | Role |
+| --- | --- |
+| [EDUCATION.md](EDUCATION.md) | Beginner → masterclass |
+| [WORKED-EXAMPLES.md](WORKED-EXAMPLES.md) | Path order, frozen payout |
+| [TIPS.md](TIPS.md) | Integration checklist |
+| [SECURITY.md](SECURITY.md) | Double-pay threat model |
+| [SOURCES.md](SOURCES.md) | Official + related labs |
 
 ## What is true (executed)
 
@@ -18,20 +29,7 @@
 | Later `receiverand` with odd entropy | `already_resolved`; payout stays |
 | First path can be `receiverand` | `resolved`; odd pays `0n` |
 | Caller is not the configured `orng` | refused |
-| Two concurrent jobs | resolve independently; no cross-bleed |
-| Same entropy twice | still pays once |
-
-## Live path, not shipped
-
-```
-open job → requestrand [not here] → randnotify or receiverand → resolveShared [tested]
-```
-
-## Related
-
-- [px-orng-v3-randnotify-starter](https://github.com/pixel-journey/px-orng-v3-randnotify-starter)
-- [px-orng-coinflip-escrow](https://github.com/pixel-journey/px-orng-coinflip-escrow)
-- [px-orng-legacy-receiverand-adapter](https://github.com/pixel-journey/px-orng-legacy-receiverand-adapter)
+| Two concurrent jobs | resolve independently |
 
 ```bash
 npm test
