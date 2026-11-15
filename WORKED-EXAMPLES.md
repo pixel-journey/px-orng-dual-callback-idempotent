@@ -1,38 +1,23 @@
-# Worked examples — dual callback resolver
+# Worked examples — dual ORNG callback
 
-Educational payout: even first 8 hex digits → `19600n`, odd → `0n` (not fair chain RNG).
+Caller must be `orng.wax`. Paths: `randnotify` (v3) and `receiverand` (legacy).
 
-## Example 1 — randnotify first
+Entropy even leading word `00000000aaaaaaaa` → educational payout **19600**. Odd `00000001bbbbbbbb` → **0**.
 
-```text
-openJob → id 1, alice
-resolveShared(path: randnotify, entropy: "00…") → status resolved, payout 19600n
-resolveShared(path: receiverand, entropy: "ff…") → already_resolved, payout stays 19600n
-```
+## First path wins
 
-## Example 2 — receiverand first
+| Sequence | Result |
+| --- | --- |
+| open job 1 alice | open |
+| resolve randnotify + even | status `resolved`, payout 19600, resolvedBy `randnotify` |
+| second resolve receiverand + odd | status `already_resolved`, payout **still 19600**, resolvedBy still `randnotify` |
 
-```text
-resolveShared(path: receiverand, entropy: odd) → resolved, payout 0n
-later randnotify with even entropy → already_resolved, payout still 0n
-```
+## Alternate first path
 
-First path wins. Second path never rewrites payout.
+receiverand first with odd entropy → resolvedBy `receiverand`, payout 0. A later randnotify would be already_resolved (same shared table).
 
-## Example 3 — wrong caller
+## Refusals
 
-`caller !== orng` → throw. Job remains unresolved so a correct oracle retry can succeed.
+Non-positive job id; duplicate open id; non-orng caller; unknown job; short/non-hex entropy.
 
-## Example 4 — two jobs
-
-Job 1 and job 2 open. Resolve job 1 only. Job 2 stays pending with `payout 0`. Composition locks no cross-bleed.
-
-## Example 5 — production intent
-
-```text
-v3 randnotify  ─┐
-                ├─→ resolveShared (one table, one resolved flag)
-legacy receiverand ─┘
-```
-
-Do not implement two separate “pay if not paid” functions that can both succeed under race assumptions without a shared latch.
+One resolver, two entry points — never pay twice.
