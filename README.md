@@ -2,8 +2,8 @@
 
 > **Domain:** WAX ORNG — dual callback idempotency  
 > **Sources:** [SOURCES.md](SOURCES.md)  
-> **Catalog:** [px-contract-examples-vault](https://github.com/pixel-journey/px-contract-examples-vault)  
-> **Path:** [ORNG-LEARNING-PATH.md](https://github.com/pixel-journey/px-contract-examples-vault/blob/main/docs/ORNG-LEARNING-PATH.md)
+> **Catalog:** `px-contract-examples-vault` (private index; not this public course)  
+> **Path:** `px-contract-examples-vault` (private index; not this public course)
 
 **Goal:** Teach **one shared resolver** for `randnotify` and legacy `receiverand` so a **second callback does not change payout**.
 

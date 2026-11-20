@@ -18,4 +18,4 @@
 | [legacy adapter](https://github.com/pixel-journey/px-orng-legacy-receiverand-adapter) | `receiverand` only |
 | [coinflip](https://github.com/pixel-journey/px-orng-coinflip-escrow) | Entropy-equality on the book |
 | [credit bucket](https://github.com/pixel-journey/px-orng-credit-bucket-monitor) | Fund the job before open |
-| [ORNG path](https://github.com/pixel-journey/px-contract-examples-vault/blob/main/docs/ORNG-LEARNING-PATH.md) | Curriculum order |
+| `px-contract-examples-vault` (private index; not this public course) | Curriculum order |

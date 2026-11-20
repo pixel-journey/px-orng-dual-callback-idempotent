@@ -33,4 +33,4 @@ Both callback **names** write the **same** job row. The second arrival is a no-o
 | Bank reserve | game escrow labs |
 | Host vs Node hash | only if you hash locally; oracle bytes should be used as delivered |
 
-Path: [ORNG-LEARNING-PATH](https://github.com/pixel-journey/px-contract-examples-vault/blob/main/docs/ORNG-LEARNING-PATH.md).
+Path: `px-contract-examples-vault` (private index; not this public course).
